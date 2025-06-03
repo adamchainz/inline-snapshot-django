@@ -1,6 +1,11 @@
+from __future__ import annotations
+
+from typing import Any
+
 from django.db import models
 
+
 class Character(models.Model):
-    name = models.TextField()
-    strength = models.IntegerField()
-    charisma = models.IntegerField()
+    name: Any = models.TextField()
+    strength: Any = models.IntegerField()
+    charisma: Any = models.IntegerField()

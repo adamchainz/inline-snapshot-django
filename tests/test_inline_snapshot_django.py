@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from django.test import TestCase
 from inline_snapshot import snapshot
-from inline_snapshot_django import snapshot_queries
 
+from inline_snapshot_django import snapshot_queries
 from tests.models import Character
 
 

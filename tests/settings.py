@@ -20,6 +20,4 @@ INSTALLED_APPS = [
 
 MIDDLEWARE: list[str] = []
 
-TEMPLATES = []
-
 USE_TZ = True

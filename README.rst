@@ -30,6 +30,7 @@ A quick example:
     from inline_snapshot import snapshot
     from inline_snapshot_django import snapshot_queries
 
+
     class IndexTests(TestCase):
         def test_success(self):
             with snapshot_queries() as snap:
