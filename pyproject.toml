@@ -6,7 +6,7 @@ requires = [
 
 [project]
 name = "inline-snapshot-django"
-version = "0.1"
+version = "1.0.0"
 description = "Extensions for using inline-snapshot to test Django projects."
 readme = "README.rst"
 keywords = [
