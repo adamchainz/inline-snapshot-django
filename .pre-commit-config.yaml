@@ -1,0 +1,74 @@
+ci:
+  autoupdate_schedule: monthly
+
+default_language_version:
+  python: python3.13
+
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b  # frozen: v5.0.0
+  hooks:
+  - id: check-added-large-files
+  - id: check-case-conflict
+  - id: check-json
+  - id: check-merge-conflict
+  - id: check-symlinks
+  - id: check-toml
+  - id: end-of-file-fixer
+    exclude: |
+      (?x)^(
+        example/example/static/ext/debug\.js
+        |src/django_htmx/static/django_htmx/htmx\.min\.js
+      )$
+  - id: trailing-whitespace
+- repo: https://github.com/crate-ci/typos
+  rev: 6cb49915af2e93e61f5f0d0a82216e28ad5c7c18  # frozen: v1
+  hooks:
+  - id: typos
+- repo: https://github.com/tox-dev/pyproject-fmt
+  rev: 57b6ff7bf72affdd12c7f3fd6de761ba18a33b3a  # frozen: v2.5.1
+  hooks:
+  - id: pyproject-fmt
+- repo: https://github.com/tox-dev/tox-ini-fmt
+  rev: e732f664aa3fd7b32cce3de8abbac43f4c3c375d  # frozen: 1.5.0
+  hooks:
+  - id: tox-ini-fmt
+- repo: https://github.com/rstcheck/rstcheck
+  rev: f30c4d170a36ea3812bceb5f33004afc213bd797  # frozen: v6.2.4
+  hooks:
+  - id: rstcheck
+    additional_dependencies:
+    - tomli==2.2.1
+- repo: https://github.com/sphinx-contrib/sphinx-lint
+  rev: ff671d6a030a3141634793e6d1e8909ab6091830  # frozen: v1.0.0
+  hooks:
+  - id: sphinx-lint
+- repo: https://github.com/adamchainz/django-upgrade
+  rev: 700530171ecf380bc829a64388f49d14ecd61c53  # frozen: 1.25.0
+  hooks:
+  - id: django-upgrade
+    args: [--target-version, '4.2']
+- repo: https://github.com/adamchainz/blacken-docs
+  rev: 78a9dcbecf4f755f65d1f3dec556bc249d723600  # frozen: 1.19.1
+  hooks:
+  - id: blacken-docs
+    additional_dependencies:
+    - black==25.1.0
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: 12753357c00c3fb8615100354c9fdc6ab80b044d  # frozen: v0.11.10
+  hooks:
+    - id: ruff-check
+      args: [ --fix ]
+    - id: ruff-format
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: f40886d54c729f533f864ed6ce584e920feb0af7  # frozen: v1.15.0
+  hooks:
+  - id: mypy
+    additional_dependencies:
+    - django-stubs==5.1.2
+    - inline-snapshot
+    - types-python-dateutil
+- repo: https://github.com/adamchainz/djade-pre-commit
+  rev: 434f2162d6f7959cc2ec23763dc483666813b1d6  # frozen: 1.4.0
+  hooks:
+  - id: djade
