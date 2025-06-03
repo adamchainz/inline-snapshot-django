@@ -10,6 +10,11 @@ DATABASES = {
         "NAME": ":memory:",
         "ATOMIC_REQUESTS": True,
     },
+    "other": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": ":memory:",
+        "ATOMIC_REQUESTS": True,
+    },
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

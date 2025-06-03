@@ -8,9 +8,11 @@ from tests.models import Character
 
 
 class IndexTests(TestCase):
+    databases = {"default", "other"}
+
     def test_single_query(self):
         with snapshot_queries() as snap:
-            list(Character.objects.all())
+            Character.objects.count()
         assert snap == snapshot(
             [
                 "SELECT ... FROM tests_character",
@@ -19,11 +21,42 @@ class IndexTests(TestCase):
 
     def test_multiple_queries(self):
         with snapshot_queries() as snap:
-            list(Character.objects.order_by("id"))
-            list(Character.objects.order_by("-id"))
+            Character.objects.count()
+            Character.objects.count()
         assert snap == snapshot(
             [
-                "SELECT ... FROM tests_character ORDER BY ... ASC",
-                "SELECT ... FROM tests_character ORDER BY ... DESC",
+                "SELECT ... FROM tests_character",
+                "SELECT ... FROM tests_character",
+            ]
+        )
+
+    def test_other_database(self):
+        with snapshot_queries(using="other") as snap:
+            Character.objects.using("other").count()
+        assert snap == snapshot(
+            [
+                "SELECT ... FROM tests_character",
+            ]
+        )
+
+    def test_other_database_unused(self):
+        with snapshot_queries(using="other") as snap:
+            Character.objects.count()
+        assert snap == snapshot([])
+
+    def test_nested(self):
+        with snapshot_queries() as snap:
+            Character.objects.count()
+            with snapshot_queries() as snap2:
+                Character.objects.count()
+        assert snap == snapshot(
+            [
+                "SELECT ... FROM tests_character",
+                "SELECT ... FROM tests_character",
+            ]
+        )
+        assert snap2 == snapshot(
+            [
+                "SELECT ... FROM tests_character",
             ]
         )
