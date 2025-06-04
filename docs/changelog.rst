@@ -2,8 +2,8 @@
 Changelog
 =========
 
-Unreleased
-----------
+1.1.0 (2025-06-04)
+------------------
 
 * Support capturing queries from multiple named database connections.
 
