@@ -73,7 +73,7 @@ There’s no need to add the package to your ``INSTALLED_APPS`` setting, as it d
 Usage
 =====
 
-The primary interface is the ``snapshot_queries()`` context manager, which captures the SQL queries executed by Django ORM and returns a list of their fingerprints.
+The primary interface is the ``snapshot_queries()`` context manager, which captures the SQL queries executed by Django, across all connections, and returns a list of their fingerprints.
 This list can then be compared against a snapshot using |inline-snapshots snapshot() function|__, for example:
 
 .. |inline-snapshots snapshot() function| replace:: inline-snapshot’s ``snapshot()`` function
@@ -165,18 +165,31 @@ For a full list of the changes it makes, or to report fingerprinting issues, hea
 API
 ===
 
-``snapshot_queries(*, using="default")``
+``snapshot_queries(*, using="__all__")``
 ----------------------------------------
 
 Parameters:
 
-* ``using: str = "default"``
+* ``using: str = "__all__"``
 
   The database alias to use for the Django ORM queries.
+  The default is a special value, ``"__all__"``, which captures queries from all databases configured in Django's settings.
 
 Returns:
 
-* ``AbstractContextManager[list[str]]``
+* ``AbstractContextManager[list[Union[str, tuple[str, str]]]]``
 
   A context manager that returns a list.
   When the context exits, this list is populated with the fingerprints of the SQL queries executed within the context.
+
+  For a query that ran on the default database, the entry will be just the fingerprint string:
+
+  .. code-block:: python
+
+    "SELECT ... FROM example_character WHERE ..."
+
+  For queries that ran on a non-default database, the entry will be a tuple of the database alias and the fingerprint string:
+
+  .. code-block:: python
+
+    ("other", "SELECT ... FROM example_character WHERE ...")
