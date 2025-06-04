@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import inspect
+import threading
 from textwrap import dedent
+from unittest import expectedFailure
 
 import django
 import pytest
@@ -155,3 +157,17 @@ class SnapshotQueriesTests(TestCase):
                 "SELECT ... FROM tests_character",
             ]
         )
+
+    @expectedFailure
+    def test_threads(self):
+        def thread_func():
+            Character.objects.count()
+
+        with snapshot_queries() as snap:
+            thread = threading.Thread(target=thread_func)
+            thread.start()
+            thread.join()
+
+        assert snap == [
+            "SELECT ... FROM tests_character",
+        ]
