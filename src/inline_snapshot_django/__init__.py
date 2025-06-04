@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import logging
 from collections import defaultdict, deque
 from collections.abc import Generator, Iterable
 from contextlib import contextmanager
+from typing import Any
 
 import sql_impressao
 from django.core.signals import request_started
@@ -35,18 +35,11 @@ def snapshot_queries(
     reset_queries_disconnected = request_started.disconnect(reset_queries)
 
     queries: list[tuple[str, str]] = []
-    log_filter = CaptureLogFilter(queries)
-    sql_logger.addFilter(log_filter)
-    sql_logger_level = sql_logger.level
-    sql_logger.setLevel(logging.DEBUG)
-
     record: list[str | tuple[str, str]] = []
     try:
-        yield record
+        with _capture_debug_logged_queries(aliases, queries):
+            yield record
     finally:
-        sql_logger.removeFilter(log_filter)
-        sql_logger.setLevel(sql_logger_level)
-
         if reset_queries_disconnected:
             request_started.connect(reset_queries)
 
@@ -73,19 +66,31 @@ def snapshot_queries(
         record.append(entry)
 
 
-class CaptureLogFilter(logging.Filter):
-    def __init__(self, queries: list[tuple[str, str]]) -> None:
-        super().__init__()
-        self.queries = queries
+@contextmanager
+def _capture_debug_logged_queries(
+    aliases: list[str], queries: list[tuple[str, str]]
+) -> Generator[None]:
+    """
+    Wrap the debug() method of Django’s logger to intercept calls and capture
+    the logged SQL queries.
 
-    def filter(self, record: logging.LogRecord) -> bool:
-        try:
-            # Attributes added via extra by Django’s CursorDebugWrapper:
-            # https://github.com/django/django/blob/b0c7d945ceae26590298b673033381cbe05ee475/django/db/backends/utils.py#L157-L162
-            alias = record.alias  # type: ignore[attr-defined]
-            sql = record.sql  # type: ignore[attr-defined]
-        except AttributeError:  # pragma: no cover
-            pass
-        else:
-            self.queries.append((alias, sql))
-        return True
+    This is done instead of using a custom logging filter to avoid modifying
+    the global logger configuration and to avoid adding logs to test output.
+    """
+    alias_set = set(aliases)
+    original_debug = sql_logger.debug
+
+    def debug_wrapper(*args: Any, extra: Any = None, **kwargs: Any) -> Any:
+        if isinstance(extra, dict) and "alias" in extra and "sql" in extra:
+            alias = extra["alias"]
+            sql = extra["sql"]
+            if alias in alias_set:
+                queries.append((alias, sql))
+        return original_debug(*args, extra=extra, **kwargs)
+
+    sql_logger.debug = debug_wrapper  # type: ignore[method-assign]
+
+    try:
+        yield
+    finally:
+        sql_logger.debug = original_debug  # type: ignore[method-assign]
