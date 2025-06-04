@@ -128,6 +128,17 @@ class SnapshotQueriesTests(TestCase):
             Character.objects.count()
         assert snap == snapshot([])
 
+    def test_using_multiple_databases(self):
+        with snapshot_queries(using={"default", "other"}) as snap:
+            Character.objects.count()
+            Character.objects.using("other").count()
+        assert snap == snapshot(
+            [
+                "SELECT ... FROM tests_character",
+                ("other", "SELECT ... FROM tests_character"),
+            ]
+        )
+
     def test_nested(self):
         with snapshot_queries() as snap:
             Character.objects.count()
