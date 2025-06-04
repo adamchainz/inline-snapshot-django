@@ -2,6 +2,9 @@
 Changelog
 =========
 
+Unreleased
+----------
+
 * Support capturing queries from multiple named database connections.
 
 * Capture queries from all database connections by default.
