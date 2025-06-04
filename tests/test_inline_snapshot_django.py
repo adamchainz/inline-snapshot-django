@@ -7,6 +7,7 @@ from unittest import expectedFailure
 
 import django
 import pytest
+from django.db.backends.utils import logger as sql_logger
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
 from inline_snapshot import snapshot
@@ -69,6 +70,20 @@ class SnapshotQueriesTests(TestCase):
             '''
         )
         assert source == expected
+
+    def test_ignored_logging_messages(self):
+        """
+        Various unknown usage of the sql logger should result in any captured queries
+        """
+        with snapshot_queries() as snap:
+            sql_logger.debug("what")
+            sql_logger.debug("what", extra=12)  # type: ignore[arg-type]
+            sql_logger.debug("what", extra={})
+            sql_logger.debug("what", extra={"alias": "default"})
+            sql_logger.debug("what", extra={"sql": "SELECT 1"})
+            sql_logger.debug("what", extra={"alias": "unknown", "sql": "SELECT 1"})
+
+        assert snap == snapshot([])
 
     def test_single_query(self):
         with snapshot_queries() as snap:
