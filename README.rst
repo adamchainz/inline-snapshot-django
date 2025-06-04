@@ -170,14 +170,28 @@ API
 
 Parameters:
 
-* ``using: str = "__all__"``
+* ``using: str | Iterable[str] = "__all__"``
 
-  The database alias to use for the Django ORM queries.
+  The database alias or aliases to capture queries for.
   The default is a special value, ``"__all__"``, which captures queries from all databases configured in Django's settings.
+
+  Provide a single name to capture queries only from that database:
+
+  .. code-block:: python
+
+    with snapshot_queries(using="default") as snap:
+        ...
+
+  Provide an iterable of names to capture queries for only those databases:
+
+  .. code-block:: python
+
+    with snapshot_queries(using={"default", "other"}) as snap:
+        ...
 
 Returns:
 
-* ``AbstractContextManager[list[Union[str, tuple[str, str]]]]``
+* ``AbstractContextManager[list[str| tuple[str, str]]]``
 
   A context manager that returns a list.
   When the context exits, this list is populated with the fingerprints of the SQL queries executed within the context.

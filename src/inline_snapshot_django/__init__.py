@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict, deque
-from collections.abc import Generator
+from collections.abc import Generator, Iterable
 from contextlib import contextmanager
 
 import sql_impressao
@@ -14,12 +14,15 @@ from django.db.backends.utils import logger as sql_logger
 @contextmanager
 def snapshot_queries(
     *,
-    using: str = "__all__",
+    using: str | Iterable[str] = "__all__",
 ) -> Generator[list[str | tuple[str, str]]]:
-    if using == "__all__":
-        aliases = list(connections)
+    if isinstance(using, str):
+        if using == "__all__":
+            aliases = list(connections)
+        else:
+            aliases = [using]
     else:
-        aliases = [using]
+        aliases = list(using)
 
     # State management copied from Django’s CaptureQueriesContext
     force_debug_cursors = []
