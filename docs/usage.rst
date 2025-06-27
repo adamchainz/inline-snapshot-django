@@ -224,3 +224,86 @@ To avoid this, use ``--inline-snapshot=fix`` to apply `the “fix” category <h
     ===================== 1 passed, 1 error in 0.08s ======================
 
 You can then review the changes with your source control tools, like ``git diff`` or a GUI tool.
+
+Handle non-fingerprinted queries with dirty-equals
+--------------------------------------------------
+
+Sometimes queries are not fingerprinted, such as when they contain SQL that isn’t yet supported by the underlying SQL parsing Rust crate, `sqlparser <https://crates.io/crates/sqlparser>`__.
+In such cases, do report an issue in `the sql-fingerprint repository <https://github.com/adamchainz/sql-fingerprint>`__.
+
+But to write tests before any fix is available, you can use inline-snapshot’s `dirty-equals <https://dirty-equals.helpmanual.io/latest/>`__ support.
+dirty-equals is a library for loosely comparing Python objects, and inline-snapshot integrates with it to allow you to use its values inside ``snapshot()`` calls.
+
+For example, imagine you have a query that cannot be fingerprinted:
+
+.. code-block:: python
+    :emphasize-lines: 23
+
+    from django.db import connection
+    from django.db.transaction import atomic
+    from django.db.utils import OperationalError
+    from django.test import TestCase
+    from inline_snapshot import snapshot
+    from inline_snapshot_django import snapshot_queries
+
+
+    class UnsupportedTests(TestCase):
+        def test_success(self):
+            with atomic(), snapshot_queries() as snap:
+                with connection.cursor() as cursor:
+                    try:
+                        cursor.execute(
+                            "SELECT imagine that this is some valid query "
+                            "that cannot be parsed by sqlparser yet"
+                        )
+                    except OperationalError:
+                        pass
+
+            assert snap == snapshot(
+                [
+                    "SELECT imagine that this is some valid query that cannot be parsed by sqlparser yet"
+                ]
+            )
+
+The recorded SQL will contain many details elided by fingerprinting, such as long lists of column names.
+It may also include variable data, such as IDs or timestamps, making the test will fail on subsequent runs.
+
+To fix such issues and provide a smaller fingerprint-like value, use |dirty-equals’ IsStr type|__ to partially match the fingerprinted SQL, like:
+
+.. |dirty-equals’ IsStr type| replace:: dirty-equals’ ``IsStr`` type
+__ https://dirty-equals.helpmanual.io/latest/types/string/#dirty_equals.IsStr
+
+.. code-block:: python
+    :emphasize-lines: 1, 24
+
+    from dirty_equals import IsStr
+    from django.db import connection
+    from django.db.transaction import atomic
+    from django.db.utils import OperationalError
+    from django.test import TestCase
+    from inline_snapshot import snapshot
+    from inline_snapshot_django import snapshot_queries
+
+
+    class UnsupportedTests(TestCase):
+        def test_success(self):
+            with atomic(), snapshot_queries() as snap:
+                with connection.cursor() as cursor:
+                    try:
+                        cursor.execute(
+                            "SELECT imagine that this is some valid query "
+                            "that cannot be parsed by sqlparser yet"
+                        )
+                    except OperationalError:
+                        pass
+
+            assert snap == snapshot(
+                [
+                    IsStr(regex=r"SELECT .* some valid query .*"),
+                ]
+            )
+
+This way, you can avoid matching irrelevant details while still ensuring that the query structure is approximately what’s expected.
+
+If a fix becomes available for the fingerprinting issue, you can later update the test by removing the ``IsStr()`` call and rerunning tests with ``--inline-snapshot=fix``.
+That should replace the ``IsStr()`` call with a proper fingerprint.
