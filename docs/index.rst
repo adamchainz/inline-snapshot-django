@@ -48,6 +48,7 @@ __ https://docs.djangoproject.com/en/stable/topics/testing/tools/#django.test.Tr
    usage
    api
    changelog
+   origins
 
 
 Indices and tables
