@@ -19,7 +19,7 @@ from tests.models import Character
 class SnapshotQueriesTests(TestCase):
     databases = {"default", "other"}
 
-    @pytest.mark.skipif(django.VERSION < (5, 2), reason="Django 5.2+")
+    @pytest.mark.skipif(django.VERSION < (6, 0), reason="Django 6.0+")
     def test_capture_queries_context_source(self):
         """
         snapshot_queries() copied a lot of code from the upstream
@@ -58,12 +58,13 @@ class SnapshotQueriesTests(TestCase):
                     self.connection.ensure_connection()
                     self.initial_queries = len(self.connection.queries_log)
                     self.final_queries = None
-                    request_started.disconnect(reset_queries)
+                    self.reset_queries_disconnected = request_started.disconnect(reset_queries)
                     return self
 
                 def __exit__(self, exc_type, exc_value, traceback):
                     self.connection.force_debug_cursor = self.force_debug_cursor
-                    request_started.connect(reset_queries)
+                    if self.reset_queries_disconnected:
+                        request_started.connect(reset_queries)
                     if exc_type is not None:
                         return
                     self.final_queries = len(self.connection.queries_log)
