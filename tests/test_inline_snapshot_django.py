@@ -7,12 +7,13 @@ from unittest import expectedFailure
 
 import django
 import pytest
+from django.core.cache import cache, caches
 from django.db.backends.utils import logger as sql_logger
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.test.utils import CaptureQueriesContext
 from inline_snapshot import snapshot
 
-from inline_snapshot_django import snapshot_queries
+from inline_snapshot_django import snapshot_cache_ops, snapshot_queries
 from tests.models import Character
 
 
@@ -186,3 +187,62 @@ class SnapshotQueriesTests(TestCase):
         assert snap == [
             "SELECT ... FROM tests_character",
         ]
+
+
+class SnapshotCacheTests(SimpleTestCase):
+    def test_nothing(self):
+        with snapshot_cache_ops() as snap:
+            pass
+        assert snap == snapshot([])
+
+    def test_cache(self):
+        with snapshot_cache_ops() as snap:
+            cache.set("key", "val")
+
+        assert snap == snapshot([("default", "set", "key")])
+
+    def test_using_caches(self):
+        with snapshot_cache_ops(using={"other"}) as snap:
+            caches["default"].get("foo")
+            caches["other"].get("foo")
+
+        assert snap == snapshot([("other", "get", "foo")])
+
+    def test_using_multiple_caches(self):
+        with snapshot_cache_ops() as snap:
+            caches["default"].get("foo")
+            caches["default"].get(key="foo")
+            caches["default"].get_many(keys=["foo"])
+            caches["other"].set("bar", "baz")
+            caches["default"].delete_many(["foo"])
+
+        assert snap == snapshot(
+            [
+                ("default", "get", "foo"),
+                ("default", "get", "foo"),
+                ("default", "get_many", ["foo"]),
+                ("other", "set", "bar"),
+                ("default", "delete_many", ["foo"]),
+            ]
+        )
+
+    def test_clean_key(self):
+        with snapshot_cache_ops() as snap:
+            cache.set("bdfc9986-d461-4a5e-bf98-8688993abcfb", "bar")
+            cache.set("abc123abc123abc123abc123abc12345", "bar")
+            cache.set(
+                "django.contrib.sessions.cacheabcdefghijklmnopqrstuvwxyz012345", "bar"
+            )
+            cache.set(
+                "django.contrib.sessions.cached_dbabcdefghijklmnopqrstuvwxyz012345",
+                "bar",
+            )
+
+        assert snap == snapshot(
+            [
+                ("default", "set", "#"),
+                ("default", "set", "#"),
+                ("default", "set", "django.contrib.sessions.cache#"),
+                ("default", "set", "django.contrib.sessions.cached_db#"),
+            ]
+        )
