@@ -56,7 +56,10 @@ def snapshot_queries(
             continue
         # Use sql_impressao to format the SQL queries
         formatted_queries_by_alias[alias] = deque(
-            sql_impressao.fingerprint_many(queries_by_alias[alias])
+            sql_impressao.fingerprint_many(
+                queries_by_alias[alias],
+                dialect=vendor_to_dialect.get(connections[alias].vendor, "generic"),
+            )
         )
 
     for alias, _ in queries:
@@ -94,3 +97,13 @@ def _capture_debug_logged_queries(
         yield
     finally:
         sql_logger.debug = original_debug  # type: ignore[method-assign]
+
+
+# Map Django database backend 'vendor' strings to sqlparser dialects
+# (They’re all the same right now…)
+vendor_to_dialect = {
+    "postgresql": "postgresql",
+    "mysql": "mysql",
+    "oracle": "oracle",
+    "sqlite": "sqlite",
+}
