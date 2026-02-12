@@ -485,7 +485,7 @@ wheels = [
 
 [[package]]
 name = "inline-snapshot-django"
-version = "1.3.0"
+version = "1.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "django", version = "4.2.27", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-22-inline-snapshot-django-django42' or (extra == 'group-22-inline-snapshot-django-django50' and extra == 'group-22-inline-snapshot-django-django51') or (extra == 'group-22-inline-snapshot-django-django50' and extra == 'group-22-inline-snapshot-django-django52') or (extra == 'group-22-inline-snapshot-django-django50' and extra == 'group-22-inline-snapshot-django-django60') or (extra == 'group-22-inline-snapshot-django-django51' and extra == 'group-22-inline-snapshot-django-django52') or (extra == 'group-22-inline-snapshot-django-django51' and extra == 'group-22-inline-snapshot-django-django60') or (extra == 'group-22-inline-snapshot-django-django52' and extra == 'group-22-inline-snapshot-django-django60')" },

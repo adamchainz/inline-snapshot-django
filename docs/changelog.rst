@@ -2,6 +2,9 @@
 Changelog
 =========
 
+1.4.0 (2026-02-12)
+------------------
+
 * Support dialect-specific SQL by passing ``dialect`` to sql-impressao.
   This fixes fingerprinting for some queries using dialect-specific SQL.
 
