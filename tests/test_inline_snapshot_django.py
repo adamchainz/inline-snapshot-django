@@ -3,16 +3,18 @@ from __future__ import annotations
 import inspect
 import threading
 from textwrap import dedent
-from unittest import expectedFailure
+from unittest import expectedFailure, mock
 
 import django
 import pytest
+from django.db import connection
 from django.db.backends.utils import logger as sql_logger
+from django.db.utils import OperationalError
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext
 from inline_snapshot import snapshot
 
-from inline_snapshot_django import snapshot_queries
+from inline_snapshot_django import snapshot_queries, vendor_to_dialect
 from tests.models import Character
 
 
@@ -187,3 +189,19 @@ class SnapshotQueriesTests(TestCase):
         assert snap == [
             "SELECT ... FROM tests_character",
         ]
+
+    def test_vendor_dialect(self):
+        with (
+            mock.patch.dict(vendor_to_dialect, {"sqlite": "postgresql"}),
+            snapshot_queries() as snap,
+            connection.cursor() as cursor,
+        ):
+            try:
+                cursor.execute("SELECT JSON_OBJECT(('id'::text) VALUE 1)")
+            except OperationalError:
+                pass
+        assert snap == snapshot(
+            [
+                "SELECT ...",
+            ]
+        )

@@ -2,6 +2,11 @@
 Changelog
 =========
 
+* Support dialect-specific SQL by passing ``dialect`` to sql-impressao.
+  This fixes fingerprinting for some queries using dialect-specific SQL.
+
+  `PR #42 <https://github.com/adamchainz/inline-snapshot-django/pull/42>`__.
+
 * Drop Python 3.9 support.
 
 1.3.0 (2025-09-18)
