@@ -205,3 +205,12 @@ class SnapshotQueriesTests(TestCase):
                 "SELECT ...",
             ]
         )
+
+    def test_without_fingerprint(self):
+        with snapshot_queries(fingerprint=False) as snap:
+            Character.objects.count()
+        assert snap == snapshot(
+            [
+                'SELECT COUNT(*) AS "__count" FROM "tests_character"',
+            ]
+        )

@@ -15,6 +15,7 @@ from django.db.backends.utils import logger as sql_logger
 def snapshot_queries(
     *,
     using: str | Iterable[str] = "__all__",
+    fingerprint: bool = True,
 ) -> Generator[list[str | tuple[str, str]]]:
     if isinstance(using, str):
         if using == "__all__":
@@ -54,13 +55,18 @@ def snapshot_queries(
     for alias in aliases:
         if alias not in queries_by_alias:
             continue
-        # Use sql_impressao to format the SQL queries
-        formatted_queries_by_alias[alias] = deque(
-            sql_impressao.fingerprint_many(
-                queries_by_alias[alias],
-                dialect=vendor_to_dialect.get(connections[alias].vendor, "generic"),
+
+        if fingerprint:
+            # Use sql_impressao to format the SQL queries
+            formatted_queries_by_alias[alias] = deque(
+                sql_impressao.fingerprint_many(
+                    queries_by_alias[alias],
+                    dialect=vendor_to_dialect.get(connections[alias].vendor, "generic"),
+                )
             )
-        )
+        else:
+            # If not fingerprinting, just use the raw SQL queries
+            formatted_queries_by_alias[alias] = deque(queries_by_alias[alias])
 
     for alias, _ in queries:
         entry = formatted_queries_by_alias[alias].popleft()
