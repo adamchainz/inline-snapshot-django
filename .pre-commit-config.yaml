@@ -65,7 +65,7 @@ repos:
   hooks:
   - id: mypy
     additional_dependencies:
-    - django-stubs==6.0.5
+    - django-stubs==6.1.0
     - inline-snapshot
     - types-python-dateutil
 - repo: https://github.com/adamchainz/djade-pre-commit
