@@ -27,6 +27,18 @@ API
         with snapshot_queries(using={"default", "other"}) as snap:
             ...
 
+   :param fingerprint:
+
+      Whether to fingerprint the captured SQL queries.
+      Defaults to ``True``.
+
+      Set to ``False`` to capture raw SQL queries instead of fingerprints:
+
+      .. code-block:: python
+
+        with snapshot_queries(fingerprint=False) as snap:
+            ...
+
    :return:
 
       A context manager that returns a list.
