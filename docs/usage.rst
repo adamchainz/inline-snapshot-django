@@ -225,7 +225,35 @@ To avoid this, use ``--inline-snapshot=fix`` to apply `the “fix” category <h
 
 You can then review the changes with your source control tools, like ``git diff`` or a GUI tool.
 
-Handle non-fingerprinted queries with dirty-equals
+
+Disable fingerprinting
+----------------------
+
+If you need to capture the exact SQL queries rather than their fingerprints, pass ``fingerprint=False``:
+
+.. code-block:: python
+   :emphasize-lines: 8
+
+   from django.test import TestCase
+   from inline_snapshot import snapshot
+   from inline_snapshot_django import snapshot_queries
+
+
+   class ExactQueryTests(TestCase):
+       def test_exact_sql(self):
+           with snapshot_queries(fingerprint=False) as snap:
+               Character.objects.count()
+
+           assert snap == snapshot(
+               [
+                   'SELECT COUNT(*) AS "__count" FROM "tests_character"',
+               ]
+           )
+
+This can be useful for debugging or when you want to verify the precise SQL being generated.
+
+
+Handle (unintentionally) non-fingerprinted queries with dirty-equals
 --------------------------------------------------
 
 Sometimes queries are not fingerprinted, such as when they contain SQL that isn’t yet supported by the underlying SQL parsing Rust crate, `sqlparser <https://crates.io/crates/sqlparser>`__.
